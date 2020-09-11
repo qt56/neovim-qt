@@ -1751,10 +1751,8 @@ void Shell::handleShimLoad(quint32 msgid, quint64 fun, const QVariant& resp)
 	auto api6 = m_nvim->api6();
 	if (api6) {
 		qDebug() << "Enabling native clipboard";
-		// FIXME we need a way to disable this behaviour and debug messages
-		// on the nvim side
 		QVariantList args;
-		auto req = api6->nvim_call_function("GuiClipboard", args);
+		auto req = api6->nvim_command("GuiClipboard 1");
 		connect(req, &MsgpackRequest::error, this, &Shell::handleShimError);
 	}
 }
