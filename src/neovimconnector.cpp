@@ -6,6 +6,7 @@
 #include "msgpackrequest.h"
 #include "neovimconnectorhelper.h"
 #include "msgpackiodevice.h"
+#include "compat.h"
 
 namespace NeovimQt {
 
@@ -353,7 +354,7 @@ NeovimConnector* NeovimConnector::connectToNeovim(const QString& server)
 	int colon_pos = addr.lastIndexOf(':');
 	if (colon_pos != -1 && colon_pos != 0 && addr[colon_pos-1] != ':') {
 		bool ok;
-		int port = addr.midRef(colon_pos+1).toInt(&ok);
+		int port = midString(addr, colon_pos+1).toInt(&ok);
 		if (ok) {
 			QString host = addr.mid(0, colon_pos);
 			return connectToHost(host, port);

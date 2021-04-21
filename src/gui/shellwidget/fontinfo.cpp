@@ -106,7 +106,8 @@ int main(int argc, char **argv)
 	}
 
 	QFont f;
-	f.setStyleHint(QFont::TypeWriter, QFont::StyleStrategy(QFont::PreferDefault | QFont::ForceIntegerMetrics));
+	f.setStyleHint(
+		QFont::TypeWriter, QFont::StyleStrategy(QFont::PreferDefault | QFont::PreferMatch ));
 	f.setFamily(QStringList(app.arguments().mid(1)).join(" "));
 	f.setFixedPitch(true);
 	f.setKerning(false);

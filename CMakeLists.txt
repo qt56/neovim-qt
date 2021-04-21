@@ -14,13 +14,16 @@ if(NOT EXISTS ${NEOVIM_EXEC})
 	set(NEOVIM_EXEC nvim)
 endif()
 
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 option(USE_GCOV "Enable gcov support" OFF)
 option(ENABLE_CLAZY "Build with KDE Clang Clazy Linter" OFF)
 option(ENABLE_TIDY "Build with Clang Tidy Linter" OFF)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR
 		"${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unused-parameter -Wunused-variable -std=c++11")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unused-parameter -Wunused-variable")
 
 	# Qt Static Analysis - Clang-Tidy based extension
 	if(ENABLE_CLAZY)
@@ -132,13 +135,27 @@ include(MacOSXPaths)
 
 # Qt
 set(CMAKE_AUTOMOC ON)
-find_package(Qt5Core REQUIRED)
-find_package(Qt5Network REQUIRED)
-find_package(Qt5Svg REQUIRED)
-find_package(Qt5Test REQUIRED)
-find_package(Qt5Widgets REQUIRED)
 
-if(Qt5Core_VERSION VERSION_LESS 5.8)
+# Build against Qt5 or Qt6
+if(NOT DEFINED QT_PACKAGES)
+	set(QT_PACKAGES Qt5)
+else()
+	message(WARNING "Overriding Qt package names: ${QT_PACKAGES}")
+endif()
+set(REQ_QT_MODULES Core Network Test Widgets)
+find_package(QT NAMES ${QT_PACKAGES} COMPONENTS ${REQ_QT_MODULES} REQUIRED)
+set(TARGET_QT "Qt${QT_VERSION_MAJOR}")
+if(${QT_VERSION_MAJOR} VERSION_GREATER_EQUAL 6.0)
+	# Qt6 uses SvgWidgets instead of Svg
+	set(REQ_QT_MODULES ${REQ_QT_MODULES} SvgWidgets)
+	set(CMAKE_CXX_STANDARD 17)
+else()
+	set(REQ_QT_MODULES ${REQ_QT_MODULES} Svg)
+endif()
+message(STATUS "Building against Qt${QT_VERSION_MAJOR}.${QT_VERSION_MINOR} ${REQ_QT_MODULES}")
+find_package(${TARGET_QT} COMPONENTS ${REQ_QT_MODULES} REQUIRED)
+
+if(Qt${QT_VERSION_MAJOR}Core_VERSION VERSION_LESS 5.8)
 	message(FATAL_ERROR "Minimum supported Qt5 version is 5.8!")
 endif()
 

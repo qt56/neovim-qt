@@ -4,7 +4,7 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QDebug>
-#include <QDesktopWidget>
+#include <QScreen>
 #include <QFontDialog>
 #include <QKeyEvent>
 #include <QMimeData>
@@ -19,6 +19,7 @@
 #include "msgpackrequest.h"
 #include "util.h"
 #include "version.h"
+#include "compat_gui.h"
 
 namespace NeovimQt {
 
@@ -311,7 +312,7 @@ void Shell::init()
 	connect(m_nvim->api0(), &NeovimApi0::on_ui_try_resize,
 			this, &Shell::neovimResizeFinished);
 
-	QRect screenRect = QApplication::desktop()->availableGeometry(this);
+	QRect screenRect = screenAvailableGeometry(this);
 	int64_t width = screenRect.width()*0.66/cellSize().width();
 	int64_t height = screenRect.height()*0.66/cellSize().height();
 	QVariantMap options;
@@ -1700,7 +1701,7 @@ QVariant Shell::inputMethodQuery(Qt::InputMethodQuery query) const
 {
 	if ( query == Qt::ImFont) {
 		return font();
-	} else if ( query == Qt::ImMicroFocus || query == Qt::ImCursorRectangle ) {
+	} else if ( query == Qt::ImCursorRectangle ) {
 		return QRect(neovimCursorTopLeft(), cellSize());
 	}
 
