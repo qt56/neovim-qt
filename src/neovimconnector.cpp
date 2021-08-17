@@ -277,8 +277,8 @@ NeovimConnector* NeovimConnector::spawn(const QStringList& params, const QString
 	c->m_spawnArgs = params;
 	c->m_spawnExe = exe;
 
-	connect(p, SIGNAL(errorOccurred(QProcess::ProcessError)),
-			c, SLOT(processError(QProcess::ProcessError)));
+	connect(p, &QProcess::errorOccurred,
+			c, &NeovimConnector::processError);
 	connect(p, SIGNAL(finished(int,QProcess::ExitStatus)),
 			c, SIGNAL(processExited(int)));
 	connect(p, &QProcess::started,
@@ -325,8 +325,8 @@ NeovimConnector* NeovimConnector::connectToHost(const QString& host, int port)
 	c->m_connHost = host;
 	c->m_connPort = port;
 
-	connect(s, SIGNAL(errorOccurred(QAbstractSocket::SocketError)),
-			c, SLOT(socketError()));
+	connect(s, &QAbstractSocket::errorOccurred,
+			c, &NeovimConnector::socketError);
 	connect(s, &QAbstractSocket::connected,
 			c, &NeovimConnector::discoverMetadata);
 	s->connectToHost(host, port);
