@@ -57,6 +57,7 @@ jobs:
             qtver: 5.15.2
             qtdir: mingw81_64
             qtstr: windows desktop win64_mingw81
+            build: build
 
           - name: Windows_Release
             flavor: Release
@@ -66,6 +67,7 @@ jobs:
             qtdir: msvc2019_64
             qtstr: windows desktop win64_msvc2019_64
             win64msvc: 1
+            build: build_win64msvc
             publish: true
 
     runs-on: ${{ matrix.runner }}
@@ -96,10 +98,10 @@ jobs:
         env:
           QT_DIR: ${{ github.workspace }}\${{ matrix.qtver }}\${{ matrix.qtdir }}
         run: |
-          New-Item -Path .\build -Name "build" -ItemType "directory"
+          New-Item -Path .\${{ matrix.build }} -Name "${{ matrix.build }}" -ItemType "directory"
           Invoke-WebRequest https://github.com/neovim/neovim/releases/download/nightly/nvim-win64.zip -OutFile nvim-win64.zip
-          Expand-Archive -Path nvim-win64.zip -DestinationPath .\build\
-          Add-Content -Path $env:GITHUB_PATH -Value ${{ github.workspace }}\build\Neovim\bin\
+          Expand-Archive -Path nvim-win64.zip -DestinationPath .\${{ matrix.build }}\
+          Add-Content -Path $env:GITHUB_PATH -Value ${{ github.workspace }}\${{ matrix.build }}\Neovim\bin\
           Add-Content -Path $env:GITHUB_ENV -Value "CMAKE_PREFIX_PATH=$env:QT_DIR;$env:QT_DIR\lib\cmake"
           Add-Content -Path $env:GITHUB_PATH -Value "${{ env.qt_dir }}"
           Add-Content -Path $env:GITHUB_PATH -Value "${{ env.qt_dir }}\bin"
@@ -141,8 +143,8 @@ jobs:
           CMAKE_BUILD_TYPE: ${{ matrix.flavor }}
           CMAKE_GENERATOR: ${{ matrix.generator }}
         run: >
-          cmake -B ./build -A x64
-          -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install
+          cmake -B ./${{ matrix.build }} -A x64
+          -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install_win64msvc
 
       - name: Build No MSVC
         if: ${{ !matrix.win64msvc }} 
@@ -150,7 +152,7 @@ jobs:
       
       - name: Build Windows with MSVC
         if: ${{ matrix.win64msvc }}
-        run: cmake --build ${{ github.workspace }}/build --config ${{ matrix.flavor }}
+        run: cmake --build ${{ github.workspace }}/${{ matrix.build }} --config ${{ matrix.flavor }}
 
       - name: Test
         if: ${{ !startsWith(matrix.runner, 'windows') }}
@@ -181,12 +183,12 @@ jobs:
       - name: Windows - Publish Release Build
         if: ${{ matrix.publish && startsWith(matrix.runner, 'windows') }}
         run: |
-          cmake --build ./build --target install
-          Push-Location ${{ github.workspace }}/build
+          cmake --build ./${{ matrix.build }} --target install
+          Push-Location ${{ github.workspace }}/${{ matrix.build }}
           cpack --verbose -G WIX
           Pop-Location
-          Compress-Archive -Path ./install -DestinationPath neovim-qt.zip
-          Move-Item -Path ./build/neovim-qt-installer.msi -Destination neovim-qt-installer.msi
+          Compress-Archive -Path ./install_win64msvc -DestinationPath neovim-qt.zip
+          Move-Item -Path ./${{ matrix.build }}/neovim-qt-installer.msi -Destination neovim-qt-installer.msi
 
       - name: Upload Artifacts
         if: ${{ matrix.publish }}
