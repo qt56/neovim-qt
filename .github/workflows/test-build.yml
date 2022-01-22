@@ -65,6 +65,7 @@ jobs:
             qtver: 5.15.2
             qtdir: msvc2019_64
             qtstr: windows desktop win64_msvc2019_64
+            win64msvc: 1
             publish: true
 
     runs-on: ${{ matrix.runner }}
@@ -123,7 +124,8 @@ jobs:
       - name: Neovim Version
         run: nvim --version
 
-      - name: Configure
+      - name: Configure No MSVC
+        if: ${{ !matrix.win64msvc }}
         env:
           CMAKE_BUILD_TYPE: ${{ matrix.flavor }}
           CMAKE_GENERATOR: ${{ matrix.generator }}
@@ -132,9 +134,23 @@ jobs:
           -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install
           -DCMAKE_C_COMPILER=${{ matrix.cc }}
           -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
+      
+      - name: Configure Windows with MSVC
+        if: ${{ matrix.win64msvc }}
+        env:
+          CMAKE_BUILD_TYPE: ${{ matrix.flavor }}
+          CMAKE_GENERATOR: ${{ matrix.generator }}
+        run: >
+          cmake -B ./build -A x64
+          -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install
 
-      - name: Build
+      - name: Build No MSVC
+        if: ${{ !matrix.win64msvc }} 
         run: cmake --build ${{ github.workspace }}/build
+      
+      - name: Build Windows with MSVC
+        if: ${{ matrix.win64msvc }}
+        run: cmake --build ${{ github.workspace }}/build --config ${{ matrix.flavor }}
 
       - name: Test
         if: ${{ !startsWith(matrix.runner, 'windows') }}
